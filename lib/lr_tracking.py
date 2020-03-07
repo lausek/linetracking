@@ -24,22 +24,46 @@ class LRTracker(LineTracker):
         # Find the contours of the frame
         contours, hierarchy = cv2.findContours(thresh.copy(), 1, cv2.CHAIN_APPROX_NONE)
 
-        # Find the biggest contour (if detected)
-        if len(contours) > 0:
-            c = max(contours, key=cv2.contourArea)
-            M = cv2.moments(c)
+        if 0 < len(contours):
 
-            if M['m00'] == 0:
-                return None
+            #cv2.line(roi, (10, 50), (100, 200), (255, 255, 0), 2)
 
-            cx = int(M['m10']/M['m00'])
-            cy = int(M['m01']/M['m00'])
+            for contour in contours:
+                [vx, vy, x0, y0] = cv2.fitLine(
+                    contour,
+                    #cv2.DIST_L2,
+                    cv2.DIST_L1,
+                    param=0,
+                    reps=0.01,
+                    aeps=0.01
+                )
+
+                if vy == 0:
+                    continue
+
+                m = vy / vx
+
+                left, right = int(-x0 * m + y0), int(100 * m + y0)
+                print(m)
+                print(left, right)
+
+                if self._preview:
+                    cv2.circle(roi, (x0, y0), 4, (255, 0, 255))
+                    cv2.line(roi, (100, right), (0, left), (255, 0, 0), 2)
+
+            #c = max(contours, key=cv2.contourArea)
+            #M = cv2.moments(c)
+
+            #if M['m00'] == 0:
+            #    return None
+
+            #cx = int(M['m10']/M['m00'])
+            #cy = int(M['m01']/M['m00'])
+
+            cx, cy = 0, 0
 
             if self._preview:
-                cv2.line(roi,(cx,0),(cx,720),(255,0,0),1)
-                cv2.line(roi,(0,cy),(1280,cy),(255,0,0),1)
-
-                cv2.drawContours(roi, contours, -1, (0,255,0), 1)
+                cv2.drawContours(roi, contours, -1, (0, 255, 0), 1)
 
                 cv2.imshow('Preview', roi)
 
@@ -49,6 +73,6 @@ class LRTracker(LineTracker):
                 print("On Track!")
             if cx <= 70:
                 print("Turn Left")
-            print(cx)
+
             return cx
         return -1

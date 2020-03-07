@@ -17,7 +17,13 @@ class Camera(object):
         return frame
 
 def main():
-    cam = Camera()
+    try:
+        idx = sys.argv.index('--in')
+        path = sys.argv[idx + 1]
+    except ValueError:
+        path = None
+
+    cam = Camera(path)
 
     if '--lr' in sys.argv:
         from lib import LRTracker
@@ -32,6 +38,7 @@ def main():
     while True:
         print(ln.track_line())
         cv2.waitKey(1)
+        time.sleep(0.1)
     
     cv2.closeAllWindows()
 
