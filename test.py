@@ -34,11 +34,17 @@ def main():
 
     if '--preview' in sys.argv:
         ln.preview(True)
+
+    autoplay = '--manual' not in sys.argv
     
     while True:
         print(ln.track_line())
-        cv2.waitKey(1)
-        time.sleep(0.1)
+
+        if autoplay:
+            cv2.waitKey(1)
+            time.sleep(0.1)
+        else:
+            cv2.waitKey(0)
     
     cv2.closeAllWindows()
 
