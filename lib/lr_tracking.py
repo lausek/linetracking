@@ -1,6 +1,7 @@
 from .tracker import LineTracker
 
 import cv2
+import math
 import numpy as np
 
 def clamp_bounds(n):
@@ -22,6 +23,11 @@ class LRTracker(LineTracker):
 
     def _slice(self, roi, rect):
         return roi[rect[1]:rect[1] + LRTracker.CHUNK_SIZE, rect[0]:rect[0] + LRTracker.CHUNK_SIZE]
+
+    def _slope_is_odd(self, m, mr):
+        angle = math.atan((m - mr) / 1 + (m * mr))
+        angle = math.degrees(angle)
+        return not (0 < angle < 20)
 
     def _slider(self, roi, main):
         def relative(base, rel):
@@ -52,14 +58,12 @@ class LRTracker(LineTracker):
         # if slope in left/right sibling is abnormal, repeat this algorithm for the sibling
 
         if not sl is None:
-            sld = abs(sl / float(sm))
-            if not (sld < slope_delta):
+            if self._slope_is_odd(sm, sl):
                 print('kreuzung links')
                 self._slider(roi, relative(sib_left, (0, -size, 0, 0)))
 
         if not sr is None:
-            srd = abs(sr / float(sm))
-            if not (srd < slope_delta):
+            if self._slope_is_odd(sm, sr):
                 print('kreuzung rechts')
                 self._slider(roi, relative(sib_right, (0, -size, 0, 0)))
 
@@ -100,6 +104,9 @@ class LRTracker(LineTracker):
         return m
 
     def _slopes_in_chunk(self, chunk):
+        if chunk.size == 0:
+            return
+
         # Convert to grayscale
         gray = cv2.cvtColor(chunk, cv2.COLOR_BGR2GRAY)
 
